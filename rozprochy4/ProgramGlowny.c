@@ -34,25 +34,46 @@ int new_process_start() {
         return 1;
     }
 
+    printf("Wybierz priorytet procesu (1-Niski, 2-Normalny, 3-Wysoki): ");
+    int priorityChoice;
+    scanf("%d", &priorityChoice);
+
+    DWORD priorityClass;
+    switch (priorityChoice) {
+        case 1:
+            priorityClass = BELOW_NORMAL_PRIORITY_CLASS;
+            break;
+        case 2:
+            priorityClass = NORMAL_PRIORITY_CLASS;
+            break;
+        case 3:
+            priorityClass = ABOVE_NORMAL_PRIORITY_CLASS;
+            break;
+        default:
+            printf("Nieprawidlowy wybor, ustawiono Normalny priorytet.\n");
+            priorityClass = NORMAL_PRIORITY_CLASS;
+            break;
+    }
+
     char exe_path[] = "ProgramPodrzedny.exe";
     STARTUPINFO structStartupInfo = { sizeof(STARTUPINFO) };
     PROCESS_INFORMATION structProcInfo;
 
     if (!CreateProcess(NULL,
      exe_path,
-     NULL, 
-     NULL, 
-     FALSE, 
-     CREATE_NEW_CONSOLE, 
-     NULL, 
-     NULL, 
-     &structStartupInfo, 
+     NULL,
+     NULL,
+     FALSE,
+     CREATE_NEW_CONSOLE | priorityClass,
+     NULL,
+     NULL,
+     &structStartupInfo,
      &structProcInfo)) {
         printf("CreateProcess failed (%d).\n", GetLastError());
         return 1;
     }
 
-    printf("Pomyslnie utworzono nowy proces.\n");
+    printf("Pomyslnie utworzono nowy proces o wybranym priorytecie.\n");
     processes[currentProcesses++] = structProcInfo;
 
     CloseHandle(structProcInfo.hProcess);
