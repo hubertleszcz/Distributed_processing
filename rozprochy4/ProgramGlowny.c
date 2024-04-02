@@ -1,103 +1,112 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
-#include "Windows.h"
+#include <Windows.h>
+
 #define MAX_PROCESSES 16
 
 PROCESS_INFORMATION processes[MAX_PROCESSES];
 int currentProcesses = 0;
 
-void exitProcess(int pID) {
-    ExitProcess(pID);
+void exitProcess(int index) {
+    if (index < 0 || index >= currentProcesses) {
+        printf("Nieprawidłowy indeks procesu.\n");
+        return;
+    }
+
+    PROCESS_INFORMATION process = processes[index];
+    if (!TerminateProcess(process.hProcess, 0)) {
+        printf("Blad podczas zamykania procesu. Kod bledu: %d\n", GetLastError());
+    } else {
+        printf("Pomyslnie zakonczono proces.\n");
+        CloseHandle(process.hProcess);
+        CloseHandle(process.hThread);
+
+        for (int i = index; i < currentProcesses - 1; i++) {
+            processes[i] = processes[i + 1];
+        }
+        currentProcesses--;
+    }
 }
 
-int new_process_start()
-{
-    if(currentProcesses >= MAX_PROCESSES){
-        printf("Osiagnieto max ilosc\n");
+int new_process_start() {
+    if (currentProcesses >= MAX_PROCESSES) {
+        printf("Osiagnieto maksymalna liczbe procesow.\n");
         return 1;
     }
-    char exe_path[] = "ProgramPodrzedny.exe";        /* wiersz polece� (command line) Windows jako proces podrz�dny */
-    STARTUPINFO structStartupInfo = {sizeof(STARTUPINFO)};      /* struktura startowa */
-    PROCESS_INFORMATION structProcInfo; /* struktura z danymi procesu podrz�dnego */
 
-    // wype�niamy struktur� startow� danymi bie��cego procesu  
-    GetStartupInfo(&structStartupInfo);
+    char exe_path[] = "ProgramPodrzedny.exe";
+    STARTUPINFO structStartupInfo = { sizeof(STARTUPINFO) };
+    PROCESS_INFORMATION structProcInfo;
 
-    // tworzymy nowy proces podrz�dny
-    if (!CreateProcess
-    (NULL,              /* lpApplicationName - nazwa modu�u, zostawiamy puste */
-        &exe_path,           /* lpCommandLine - lista parametr�w, je�li lpApplicationName == NULL to pierwszy parametr tu jest �cie�k� do pliku EXE kt�ry b�dzie procesem podrz�dnym */
-        NULL,               /* lpProcessAttributes - wska�nik do struktury SECURITY_ATTRIBUTES, kt�ra okre�la, czy zwr�cone doj�cie do nowego obiektu procesu mo�e by� dziedziczone przez procesy potomne */
-        NULL,               /* lpThreadAttributes */
-        FALSE,              /* bInheritHandles */
-        CREATE_NEW_CONSOLE, /* dwCreationFlags - ustawiaj�c flag� CREATE_NEW_CONSOLE umo�liwiamy otwarcie nowego okna konsoli dla procesu podrz�dnego */
-        0,                  /* lpEnvironment */
-        0,                  /* lpCurrentDirectory */
-        &structStartupInfo, /* lpStartupInfo - wska�nik na struktur� startow� */
-        &structProcInfo     /* lpProcessInformation - wska�nik na struktur� z danymi procesu podrz�dnego */
-    ))
-    {
+    if (!CreateProcess(NULL,
+     exe_path,
+     NULL, 
+     NULL, 
+     FALSE, 
+     CREATE_NEW_CONSOLE, 
+     NULL, 
+     NULL, 
+     &structStartupInfo, 
+     &structProcInfo)) {
         printf("CreateProcess failed (%d).\n", GetLastError());
         return 1;
     }
 
-    // chwil� czekamy (5 sek.) :)
-    Sleep(5000);
+    printf("Pomyslnie utworzono nowy proces.\n");
     processes[currentProcesses++] = structProcInfo;
-    // pr�bujemy zako�czy� proces podrz�dny (bo sam si� nie sko�czy wraz z zako�czeniem procesu nadrz�dnego!) 
-    if (!TerminateProcess(structProcInfo.hProcess, 0))
-    {
-        printf("TerminateProcess failed (%d).\n", GetLastError());
-        return 2;
-    }
 
-    // zamykamy stosowne uchwyty 
     CloseHandle(structProcInfo.hProcess);
     CloseHandle(structProcInfo.hThread);
+
     return 0;
 }
 
-
-void clean(){
-    for(int i=0;i<currentProcesses;i++){
-        TerminateThread(processes[i].hProcess, 0);
+void clean() {
+    for (int i = 0; i < currentProcesses; i++) {
+        TerminateProcess(processes[i].hProcess, 0);
         CloseHandle(processes[i].hThread);
         CloseHandle(processes[i].hProcess);
     }
 }
 
-void printOut(){
-    for(int i=0;i<currentProcesses;i++){
+void printOut() {
+    for (int i = 0; i < currentProcesses; i++) {
         printf("Proces %d, ID = %d\n", i, processes[i].dwProcessId);
     }
 }
 
-int main()
-{
+int main() {
     int choice;
     int ongoing = 1;
-    printf("1 - stworz nowy proces\n 2 - zatrzymaj wybrany\n 3-wyswietl wszystkie\n4 - koniec\n");
+
+    printf("1 - stworz nowy proces\n2 - zatrzymaj wybrany proces o ID parametru\n3 - wyswietl wszystkie\n4 - koniec\n");
+
     while (ongoing) {
-        scanf_s("%d", &choice);
+        scanf("%d", &choice);
         switch (choice) {
-        case 1:
-            printf("Start\n");
-            int res = new_process_start();
-            if (!res) printf("Started and terminated\n");
-            break;
-        case 3:
-            printOut();
-            break;
-        case 4:
+            case 1:
+                new_process_start();
+                break;
+            case 2:
+                printf("Podaj index: \n");
+                int index;
+                scanf("%d", &index);
+                exitProcess(index);
+                break;
+            case 3:
+                printOut();
+                break;
+            case 4:
                 clean();
                 ongoing = 0;
                 break;
+            default:
+                printf("Nieprawidlowy wybor opcji.\n");
+                break;
         }
+
+        while (getchar() != '\n');
     }
-    
-    
+
     return 0;
 }
-
-
-
