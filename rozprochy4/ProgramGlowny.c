@@ -12,8 +12,12 @@ void exitProcess(int pID) {
 
 int new_process_start()
 {
-    char* exe_path = "ProgramPodrzedny.exe";        /* wiersz polece� (command line) Windows jako proces podrz�dny */
-    STARTUPINFO structStartupInfo;      /* struktura startowa */
+    if(currentProcesses >= MAX_PROCESSES){
+        printf("Osiagnieto max ilosc\n");
+        return 1;
+    }
+    char exe_path[] = "ProgramPodrzedny.exe";        /* wiersz polece� (command line) Windows jako proces podrz�dny */
+    STARTUPINFO structStartupInfo = {sizeof(STARTUPINFO)};      /* struktura startowa */
     PROCESS_INFORMATION structProcInfo; /* struktura z danymi procesu podrz�dnego */
 
     // wype�niamy struktur� startow� danymi bie��cego procesu  
@@ -39,7 +43,7 @@ int new_process_start()
 
     // chwil� czekamy (5 sek.) :)
     Sleep(5000);
-
+    processes[currentProcesses++] = structProcInfo;
     // pr�bujemy zako�czy� proces podrz�dny (bo sam si� nie sko�czy wraz z zako�czeniem procesu nadrz�dnego!) 
     if (!TerminateProcess(structProcInfo.hProcess, 0))
     {
@@ -63,7 +67,9 @@ void clean(){
 }
 
 void printOut(){
-
+    for(int i=0;i<currentProcesses;i++){
+        printf("Proces %d, ID = %d\n", i, processes[i].dwProcessId);
+    }
 }
 
 int main()
