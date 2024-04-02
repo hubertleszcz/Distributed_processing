@@ -62,6 +62,10 @@ void clean(){
     }
 }
 
+void printOut(){
+
+}
+
 int main()
 {
     int choice;
@@ -75,7 +79,9 @@ int main()
             int res = new_process_start();
             if (!res) printf("Started and terminated\n");
             break;
-
+        case 3:
+            printOut();
+            break;
         case 4:
                 clean();
                 ongoing = 0;
