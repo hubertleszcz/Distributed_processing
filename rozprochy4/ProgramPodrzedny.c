@@ -6,75 +6,14 @@
 HANDLE threadHandles[MAX_THREADS];
 int numThreads = 0;
 
-int NWD(int a, int b){
-    if(a==b) return a;
-    else return (a<b) ? NWD(a,b-a) : NWD(a-b,b);
+void createThread() {
+    DWORD stackSize, priorityClass;
+    int priorityChoice;
+    printf("Podaj wielkosc stosu:\n");
+    scanf("&d", &stackSize);
+    printf("Podaj priorytet: 1- LOWEST, 2 - BELOW_NORMAL, 3-NORMAL, 4-ABOVE_NORMAL, 5-HIGHEST\n");
 }
 
-void computationTask(void* param) {
-    int* threadParams = (int*)param;
-    int taskId = threadParams[0];
-    int duration = threadParams[1];
-    int priority = threadParams[2];
-
-    // Symulacja obliczeń
-    printf("Wątek %d rozpoczął obliczenia.\n", taskId);
-    Sleep(duration * 1000);
-    printf("Wątek %d zakończył obliczenia.\n", taskId);
-
-    free(param);
-    _endthread();
-}
-
-void createThread(int priority) {
-
-}
-
-void deleteThread(int threadIndex) {
-    if (threadIndex < 0 || threadIndex >= numThreads) {
-        printf("Nieprawidłowy indeks wątku.\n");
-        return;
-    }
-
-    if (!TerminateThread(threadHandles[threadIndex], 0)) {
-        printf("Błąd podczas usuwania wątku.\n");
-        return;
-    }
-
-    printf("Usunięto wątek o numerze %d.\n", threadIndex + 1);
-
-    CloseHandle(threadHandles[threadIndex]);
-    for (int i = threadIndex; i < numThreads - 1; i++) {
-        threadHandles[i] = threadHandles[i + 1];
-    }
-    numThreads--;
-}
-
-void changeThreadPriority(int threadIndex, int priority) {
-    if (threadIndex < 0 || threadIndex >= numThreads) {
-        printf("Nieprawidłowy indeks wątku.\n");
-        return;
-    }
-
-    if (!SetThreadPriority(threadHandles[threadIndex], priority)) {
-        printf("Błąd podczas zmiany priorytetu wątku.\n");
-        return;
-    }
-
-    printf("Zmieniono priorytet wątku o numerze %d na %d.\n", threadIndex + 1, priority);
-}
-
-void displayThreadList() {
-    if (numThreads == 0) {
-        printf("Brak wątków.\n");
-        return;
-    }
-
-    printf("Lista wątków:\n");
-    for (int i = 0; i < numThreads; i++) {
-        printf("Wątek %d\n", i + 1);
-    }
-}
 void exitProgram() {
     for (int i = 0; i < numThreads; i++) {
         TerminateThread(threadHandles[i], 0);
@@ -95,10 +34,7 @@ int main(){
         scanf("%d", &choice);
         switch (choice) {
             case 1:
-                printf("Podaj priorytet wątku (0 - najniższy, 31 - najwyższy): ");
-                int priority;
-                scanf("%d", &priority);
-                createThread(priority);
+                createThread();
                 break;
             case 2:
                 printf("Podaj indeks wątku do usunięcia: ");

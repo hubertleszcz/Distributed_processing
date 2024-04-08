@@ -34,7 +34,7 @@ int new_process_start() {
         return 1;
     }
 
-    printf("Wybierz priorytet procesu (1-Niski, 2-Normalny, 3-Wysoki): ");
+    printf("Wybierz priorytet(1-Niski, 2-Normalny, 3-Wysoki): ");
     int priorityChoice;
     scanf("%d", &priorityChoice);
 
@@ -64,7 +64,7 @@ int new_process_start() {
      NULL,
      NULL,
      FALSE,
-     CREATE_NEW_CONSOLE | priorityClass,
+     CREATE_NEW_CONSOLE,
      NULL,
      NULL,
      &structStartupInfo,
@@ -73,11 +73,13 @@ int new_process_start() {
         return 1;
     }
 
-    printf("Pomyslnie utworzono nowy proces o wybranym priorytecie.\n");
     processes[currentProcesses++] = structProcInfo;
-
-    CloseHandle(structProcInfo.hProcess);
-    CloseHandle(structProcInfo.hThread);
+    if(SetPriorityClass(processes[currentProcesses-1].hProcess, priorityClass)){
+        printf("Ustawiono priortytet\n");
+    }
+    else{
+        printf("Blad przy ustawianiu priorytetu\n");
+    }
 
     return 0;
 }
@@ -92,7 +94,7 @@ void clean() {
 
 void printOut() {
     for (int i = 0; i < currentProcesses; i++) {
-        printf("Proces %d, ID = %d\n", i, processes[i].dwProcessId);
+        printf("Proces %d, ID = %d, priorytet = %d\n", i, processes[i].dwProcessId, GetPriorityClass(processes[i].hProcess));
     }
 }
 
