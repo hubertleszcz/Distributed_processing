@@ -7,7 +7,24 @@
 PROCESS_INFORMATION processes[MAX_PROCESSES];
 int currentProcesses = 0;
 
+void cleanUp(){
+    for(int i=0;i<currentProcesses;i++){
+        DWORD code;
+        if(GetExitCodeProcess(processes[i].hProcess,&code)){
+            if(code != STILL_ACTIVE){
+                CloseHandle(processes[i].hProcess);
+                for (int j = i; j < currentProcesses - 1; j++) {
+                    processes[j] = processes[j + 1];
+                }
+                currentProcesses--;
+                i--;
+            }
+        }
+    }
+}
+
 void exitProcess(int index) {
+    cleanUp();
     if (index < 0 || index >= currentProcesses) {
         printf("Nieprawidłowy indeks procesu.\n");
         return;
@@ -29,6 +46,7 @@ void exitProcess(int index) {
 }
 
 int new_process_start() {
+    cleanUp();
     if (currentProcesses >= MAX_PROCESSES) {
         printf("Osiagnieto maksymalna liczbe procesow.\n");
         return 1;
@@ -93,6 +111,7 @@ void clean() {
 }
 
 void printOut() {
+    cleanUp();
     for (int i = 0; i < currentProcesses; i++) {
         printf("Proces %d, ID = %d, priorytet = %d\n", i, processes[i].dwProcessId, GetPriorityClass(processes[i].hProcess));
     }
